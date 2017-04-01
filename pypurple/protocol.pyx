@@ -89,8 +89,8 @@ cdef class Protocol:
             label_name = accountopt.purple_account_option_get_text(option)
             setting = accountopt.purple_account_option_get_setting(option)
 
-            sett = str(<char *> setting)
-            label = str(<char *> label_name)
+            sett = <char *> setting
+            label = <char *> label_name
 
             iter = iter.next
 
@@ -124,7 +124,7 @@ cdef class Protocol:
             type = accountopt.purple_account_option_get_type(option)
             setting = accountopt.purple_account_option_get_setting(option)
 
-            sett = str(<char *> setting)
+            sett = <char *> setting
 
             if type == prefs.PURPLE_PREF_STRING:
                 str_value = accountopt.purple_account_option_get_default_string(option)
@@ -132,7 +132,7 @@ cdef class Protocol:
                 # protocol's option is NULL
                 if str_value == NULL:
                     str_value = ""
-                val = str(<char *> str_value)
+                val = <char *> str_value
 
             elif type == prefs.PURPLE_PREF_INT:
                 int_value = accountopt.purple_account_option_get_default_int(option)
@@ -146,7 +146,7 @@ cdef class Protocol:
             elif type == prefs.PURPLE_PREF_STRING_LIST:
                 str_value = accountopt.purple_account_option_get_default_list_value(option)
 
-                val = str(<char *> str_value)
+                val =<char *> str_value
 
             iter = iter.next
 

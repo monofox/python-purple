@@ -92,15 +92,15 @@ cdef class Plugin:
             label_name = accountopt.purple_account_option_get_text(option)
             setting = accountopt.purple_account_option_get_setting(option)
 
-            sett = str(<char *> setting)
-            label = str(<char *> label_name)
+            sett = <char *> setting
+            label = <char *> label_name
 
             if type == prefs.PURPLE_PREF_STRING:
                 str_value = accountopt.purple_account_option_get_default_string(option)
                 if c_account != NULL:
                     str_value = account.purple_account_get_string(c_account, setting, str_value)
 
-                val = str(<char *> str_value)
+                val = <char *> str_value
 
             elif type == prefs.PURPLE_PREF_INT:
                 int_value = accountopt.purple_account_option_get_default_int(option)
@@ -121,7 +121,7 @@ cdef class Plugin:
                 if c_account != NULL:
                     str_value = account.purple_account_get_string(c_account, setting, str_value)
 
-                val = str(<char *> str_value)
+                val = <char *> str_value
 
             iter = iter.next
 
@@ -165,7 +165,7 @@ cdef class Plugin:
             type = accountopt.purple_account_option_get_type(option)
             setting = accountopt.purple_account_option_get_setting(option)
 
-            sett = str(<char *> setting)
+            sett = <char *> setting
 
             iter = iter.next
 

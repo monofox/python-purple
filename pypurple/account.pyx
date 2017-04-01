@@ -135,7 +135,7 @@ cdef class Account:
             label_name = <char *> accountopt.purple_account_option_get_text(option)
             setting = <char *> accountopt.purple_account_option_get_setting(option)
 
-            sett = str(<char *> setting)
+            sett = <char *> setting
 
             if type == prefs.PURPLE_PREF_STRING:
 
@@ -147,7 +147,7 @@ cdef class Account:
                     str_value = ""
                 str_value = <char *> account.purple_account_get_string(c_account, setting, str_value)
 
-                val = str(<char *> str_value)
+                val = <char *> str_value
 
             elif type == prefs.PURPLE_PREF_INT:
 
@@ -168,7 +168,7 @@ cdef class Account:
                 str_value = <char *> accountopt.purple_account_option_get_default_list_value(option)
                 str_value = <char *> account.purple_account_get_string(c_account, setting, str_value)
 
-                val = str(<char *> str_value)
+                val = <char *> str_value
 
             iter = iter.next
 
@@ -333,7 +333,7 @@ cdef class Account:
             type = accountopt.purple_account_option_get_type(option)
             setting = <char *> accountopt.purple_account_option_get_setting(option)
 
-            sett = str(<char *> setting)
+            sett = <char *> setting
 
             if sett not in po:
                 iter = iter.next

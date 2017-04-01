@@ -106,7 +106,7 @@ cdef class Purple:
         '''
 
         global c_ui_name
-        return str(c_ui_name)
+        return c_ui_name
     ui_name = property(__get_ui_name)
 
     cdef void __core_ui_ops_ui_prefs_init(self):
