@@ -1,3 +1,10 @@
+This project is attempt to revive python-purple, convert to python3 and
+make it more palatible for integration with other projects.
+
+Andrey Petrov (andrey.petrov@gmail.com)
+
+<original project readme goes below>
+
 python-purple - Python bindings for libpurple
 ---------------------------------------------
 
