@@ -1,12 +1,13 @@
 #!/usr/bin/python3
 
+import pkgconfig
+
 from distutils.core import setup
 from distutils.extension import Extension
+from Cython.Distutils import build_ext
 
-from subprocess import Popen, PIPE
-
-cflags = Popen(['pkg-config', '--cflags', 'purple'], stdout=PIPE).communicate()[0].decode()
-ldflags = Popen(['pkg-config', '--libs', 'purple'], stdout=PIPE).communicate()[0].decode()
+cflags = pkgconfig.cflags('purple')
+ldflags = pkgconfig.libs('purple')
 
 purplemodule = Extension('purple',
                          sources=['c_purple.c','purple.c'],
@@ -24,3 +25,5 @@ setup(name = 'python-purple',
       long_description = long_description,
       ext_modules = [purplemodule],
       )
+                  extra_compile_args=cflags.split(),
+                  extra_link_args=ldflags.split())
