@@ -1,87 +1,25 @@
-This project is attempt to revive python-purple, convert to python3 and
-make it more palatible for integration with other projects.
-
-Andrey Petrov (andrey.petrov@gmail.com)
-
-<original project readme goes below>
-
 python-purple - Python bindings for libpurple
 ---------------------------------------------
 
+Original copyright:
 Copyright (c) 2008 INdT - Instituto Nokia de Tecnologia
 
-Requirements
-------------
+This project is attempt to revive python-purple, convert to python3 and
+make it more palatible for integration with other projects.
 
-In order to build python-purple, you need the following packages:
- * cdbs
- * debhelper
- * libpurple-dev
- * libglib2.0-dev
- * python2.5-dev
- * python2.5-distutils
- * cython (optional)
+Installation:
 
-Although it's not dependent, cython should also needed if you want to
-re-create purple.c file (generated from cython using purple.pyx).
+```
+apt-get install libpython3.4-dev gcc build-essential libglib2.0-dev libpurple-dev
+pip3 install python-purple
+```
 
-Building and installing python-purple
--------------------------------------
+If you wish to recompile `purple.c` with Cython (not required) use:
 
-Building cython-generated purple.c file (optional):
+```
+setup.py build --with-cython
+setup.py install
+```
 
-$ cython purple.pyx -I libpurple/
+Andrey Petrov (andrey.petrov@gmail.com)
 
-This is also done by setup.py when running:
-
-$ python2.5 setup.py build
-
-If you don't need to generate purple.c file, you can use setup_dist.py:
-
-$ python2.5 setup_dist.py build
-
-Both setups generates purple.so inside build/ directory. The difference is
-that setup.py also generates purple.c file, if it doesn't exists.
-
-To install files inside your system:
-
-$ sudo python2.5 setup.py install --root=/usr
-
-You can also create a debian package of it:
-
-$ dpkg-buildpackage -rfakeroot
-
-Testing python-purple
----------------------
-
-Python-purple provides a client example (nullclient) which connects to a
-Gtalk account and displays libpurple's debug messages. In order to execute it,
-issue the following command:
-
-$ LD_PRELOAD=/usr/lib/libpurple.so.0 python2.5 nullclient.py
-
-It will ask for a username and then password. Insert it and it will
-automatically connect to the given account.
-
-There is also another example client (nullclient-ecore), which provides some
-callback examples from libpurple interacting with UI. In order to execute it,
-issue the following command:
-
-$ LD_PRELOAD=/usr/lib/libpurple.so.0 python2.5 nullclient-ecore.py
-
-An Etk-based window will pop up showing text windows, a command entry and
-three buttons ('Send', 'Connect', 'Add account'). In order to test it, follow
-the steps below:
-
-1. Click on 'Add account' button. A pop-up window appears, and you can enter
-there a gmail-based account (e.g. jsmith@gmail.com). Click 'Ok' when done.
-
-2. Click on 'Connect' button. A pop-up window appears asking for account's
-password. Click 'Ok' when done.
-
-Now wait for the account connection. When 'Connected' appears, your buddy
-list gets updated.
-
-3. You are now connected! Select a buddy from buddy list, write a message on
-the command entry and click 'Send'. Your message appears in the text box.
-If your buddy replies, his/her message also gets shown in the text box.

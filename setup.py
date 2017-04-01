@@ -1,28 +1,37 @@
 #!/usr/bin/python3
 
-import pkgconfig
+import sys
 
-from distutils.core import setup
-from distutils.extension import Extension
-from Cython.Distutils import build_ext
-from Cython.Build import cythonize
+from setuptools import setup, Extension
+from subprocess import Popen, PIPE
 
-cflags = pkgconfig.cflags('purple')
-ldflags = pkgconfig.libs('purple')
+EXT_PKG_CONFIG_TOOL='pkg-config'
+PKG_CONFIG_PACKAGE='purple'
+
+if '--use-cython' in sys.argv:
+    USE_CYTHON = True
+    sys.argv.remove('--use-cython')
+else:
+    USE_CYTHON = False
+
+def get_cflags():
+    return Popen([EXT_PKG_CONFIG_TOOL, '--cflags', PKG_CONFIG_PACKAGE], stdout=PIPE).communicate()[0].decode().split()
+
+def get_ldflags():
+    return Popen([EXT_PKG_CONFIG_TOOL, '--libs', PKG_CONFIG_PACKAGE], stdout=PIPE).communicate()[0].decode().split()
 
 long_description = "\
 Python bindings for libpurple, a multi-protocol instant messaging library."
 
-class pypurple_build_ext(build_ext):
-    def finalize_options(self):
-        build_ext.finalize_options(self)
-        self.include_dirs.insert(0, 'libpurple')
-        self.pyrex_include_dirs.extend(self.include_dirs)
-
 sourcefiles = ['purple/purple.pyx', 'purple/c_purple.c']
 extensions = [Extension("purple", sourcefiles,
-                        extra_compile_args=cflags.split(),
-                        extra_link_args=ldflags.split())]
+                        extra_compile_args=get_cflags(),
+                        extra_link_args=get_ldflags())]
+
+if USE_CYTHON:
+    from Cython.Build import cythonize
+    extensions = cythonize(extensions, include_path=["purple/libpurple"])
+
 setup(
     name='purple',
     version='0.0.1',
@@ -34,6 +43,5 @@ setup(
     download_url="https://github.com/anpetrov/python-purple/archive/0.0.1.tar.gz",
     long_description=long_description,
     include_package_data=True,
-    ext_modules=cythonize(extensions, include_path=["purple/libpurple"]),
-    cmdclass={'build_ext': pypurple_build_ext}
+    ext_modules=extensions
 )
