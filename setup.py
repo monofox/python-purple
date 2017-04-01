@@ -18,14 +18,19 @@ class pypurple_build_ext(build_ext):
         self.include_dirs.insert(0, 'libpurple')
         self.pyrex_include_dirs.extend(self.include_dirs)
 
-setup(name = 'python-purple',
-      version = '0.1',
-      author ='Bruno Abinader',
-      author_email = 'bruno.abinader@openbossa.org',
-      description = 'Python bindings for Purple',
-      long_description = long_description,
-      ext_modules = [purplemodule],
-      cmdclass = {'build_ext': pypurple_build_ext},
-      )
+setup(
+    name='purple',
+    version='0.0.1',
+    author='Andrey Petrov',
+    author_email='andrey.petrov@gmail.com',
+    description='Python bindings for Purple',
+    long_description=long_description,
+
+    ext_modules=[
+        Extension('c_purple.c', ['purple.pyx'],
                   extra_compile_args=cflags.split(),
                   extra_link_args=ldflags.split())
+    ],
+    cmdclass={'build_ext': pypurple_build_ext}
+
+)

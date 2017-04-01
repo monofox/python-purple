@@ -17,13 +17,13 @@ purplemodule = Extension('purple',
 long_description = "\
 Python bindings for libpurple, a multi-protocol instant messaging library."
 
-setup(name = 'python-purple',
-      version = '0.1',
-      author ='Bruno Abinader',
-      author_email = 'bruno.abinader@openbossa.org',
-      description = 'Python bindings for Purple',
-      long_description = long_description,
-      ext_modules = [purplemodule],
-      )
-                  extra_compile_args=cflags.split(),
-                  extra_link_args=ldflags.split())
+setup(
+    name='purple',
+    version='0.0.1',
+    author='Andrey Petrov',
+    author_email='andrey.petrov@gmail.com',
+    description='Python bindings for Purple',
+    long_description=long_description,
+
+    ext_modules = [purplemodule]
+)
