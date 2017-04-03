@@ -72,7 +72,7 @@ cdef class Purple:
 
 
     def __init__(self, ui_name, ui_version, ui_website, ui_dev_website, \
-            debug_enabled=None, default_path=None):
+            debug_enabled=None, default_path=None, ignore_sigchld=False):
 
         global c_ui_name
         global c_ui_version
@@ -94,7 +94,8 @@ cdef class Purple:
         # blocking lookups without blocking the main process.  It does not
         # handle SIGCHLD itself, so if the UI does not you quickly get an army
         # of zombie subprocesses marching around.
-        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+        if ignore_sigchld:
+            signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
     def destroy(self):
         core.purple_core_quit()
