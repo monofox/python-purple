@@ -26,6 +26,7 @@ cimport prpl
 cimport savedstatuses
 cimport server
 cimport status
+cimport util
 
 cdef class Account:
     """
@@ -51,8 +52,8 @@ cdef class Account:
             self.__exists = False
 
     cdef account.PurpleAccount *_get_structure(self):
-        return account.purple_accounts_find(self.__username, \
-                self.__protocol.id)
+        return account.purple_accounts_find(self.__username.encode(), \
+                self.__protocol.id.encode())
 
     def __is_connected(self):
         if self.__exists:
@@ -110,7 +111,7 @@ cdef class Account:
         cdef plugin.PurplePlugin *c_plugin
         cdef prpl.PurplePluginProtocolInfo *prpl_info
         cdef accountopt.PurpleAccountOption *option
-        cdef prefs.PurplePrefType type
+        cdef prefs.PurplePrefType prtype
         cdef char *label_name
         cdef char *str_value
         cdef char *setting
@@ -131,13 +132,13 @@ cdef class Account:
         while iter:
 
             option = <accountopt.PurpleAccountOption *> iter.data
-            type = accountopt.purple_account_option_get_type(option)
+            prtype = accountopt.purple_account_option_get_type(option)
             label_name = <char *> accountopt.purple_account_option_get_text(option)
             setting = <char *> accountopt.purple_account_option_get_setting(option)
 
             sett = <char *> setting
 
-            if type == prefs.PURPLE_PREF_STRING:
+            if prtype == prefs.PURPLE_PREF_STRING:
 
                 str_value = <char *> accountopt.purple_account_option_get_default_string(option)
 
@@ -149,21 +150,21 @@ cdef class Account:
 
                 val = <char *> str_value
 
-            elif type == prefs.PURPLE_PREF_INT:
+            elif prtype == prefs.PURPLE_PREF_INT:
 
                 int_value = accountopt.purple_account_option_get_default_int(option)
                 int_value = account.purple_account_get_int(c_account, setting, int_value)
 
                 val = int(int_value)
 
-            elif type == prefs.PURPLE_PREF_BOOLEAN:
+            elif prtype == prefs.PURPLE_PREF_BOOLEAN:
 
                 bool_value = accountopt.purple_account_option_get_default_bool(option)
                 bool_value = account.purple_account_get_bool(c_account, setting, bool_value)
 
                 val = bool(bool_value)
 
-            elif type == prefs.PURPLE_PREF_STRING_LIST:
+            elif prtype == prefs.PURPLE_PREF_STRING_LIST:
 
                 str_value = <char *> accountopt.purple_account_option_get_default_list_value(option)
                 str_value = <char *> account.purple_account_get_string(c_account, setting, str_value)
@@ -302,7 +303,7 @@ cdef class Account:
         else:
             return False
 
-    def set_protocol_options(self, po):
+    def set_protocol_options(self, py_po):
         """
         @param po Dictionary {'setting': value, ...} options to be updated
         @return True to success or False to failure
@@ -312,25 +313,30 @@ cdef class Account:
         cdef plugin.PurplePlugin *c_plugin
         cdef prpl.PurplePluginProtocolInfo *prpl_info
         cdef accountopt.PurpleAccountOption *option
-        cdef prefs.PurplePrefType type
+        cdef prefs.PurplePrefType prtype
         cdef char *str_value
         cdef char *setting
         cdef int int_value
         cdef glib.gboolean bool_value
+
+        po = {}
 
         c_account = self._get_structure()
 
         if c_account == NULL:
             return False
 
-        c_plugin = plugin.purple_plugins_find_with_id(self.__protocol.id)
+        po = unicode_to_c(py_po)
+
+        c_plugin = plugin.purple_plugins_find_with_id(self.__protocol.id.encode())
+
         prpl_info = plugin.PURPLE_PLUGIN_PROTOCOL_INFO(c_plugin)
         iter = prpl_info.protocol_options
 
         while iter:
 
             option = <accountopt.PurpleAccountOption *> iter.data
-            type = accountopt.purple_account_option_get_type(option)
+            prtype = accountopt.purple_account_option_get_type(option)
             setting = <char *> accountopt.purple_account_option_get_setting(option)
 
             sett = <char *> setting
@@ -339,22 +345,22 @@ cdef class Account:
                 iter = iter.next
                 continue
 
-            if type == prefs.PURPLE_PREF_STRING:
+            if prtype == prefs.PURPLE_PREF_STRING:
 
-                str_value = <char *> po[sett]
+                str_value = <char*> po[sett]
                 account.purple_account_set_string(c_account, setting, str_value)
 
-            elif type == prefs.PURPLE_PREF_INT:
+            elif prtype == prefs.PURPLE_PREF_INT:
 
                 int_value = int(po[sett])
                 account.purple_account_set_int(c_account, setting, int_value)
 
-            elif type == prefs.PURPLE_PREF_BOOLEAN:
+            elif prtype == prefs.PURPLE_PREF_BOOLEAN:
 
                 bool_value = bool(po[sett])
                 account.purple_account_set_bool(c_account, setting, bool_value)
 
-            elif type == prefs.PURPLE_PREF_STRING_LIST:
+            elif prtype == prefs.PURPLE_PREF_STRING_LIST:
 
                 str_value = <char *> po[sett]
                 account.purple_account_set_string(c_account, setting, str_value)
@@ -372,7 +378,7 @@ cdef class Account:
         """
         if self.__exists:
             account.purple_account_set_password(self._get_structure(), \
-                    password)
+                    password.encode())
             return True
         else:
             return False
@@ -386,7 +392,7 @@ cdef class Account:
         """
         if self.__exists:
             account.purple_account_set_alias(self._get_structure(), \
-                    alias)
+                    alias.encode())
             return True
         else:
             return False
@@ -444,7 +450,7 @@ cdef class Account:
             return False
         else:
             account.purple_accounts_add(account.purple_account_new( \
-                    self.__username, self.__protocol.id))
+                    self.__username.encode(), self.__protocol.id.encode()))
 
             self.__exists = True
             return True
@@ -505,7 +511,7 @@ cdef class Account:
 
         if self.__exists and \
                 account.purple_account_is_connected(self._get_structure()):
-            if blist.purple_find_buddy(self._get_structure(), name):
+            if blist.purple_find_buddy(self._get_structure(), name.encode()):
                 return False
 
             if group:
@@ -514,14 +520,14 @@ cdef class Account:
                     c_group = blist.purple_group_new(group)
 
             c_buddy = blist.purple_buddy_new(self._get_structure(), \
-                    name, c_alias)
+                    name.encode(), c_alias.encode())
             if c_buddy == NULL:
                 return False
 
             blist.purple_blist_add_buddy(c_buddy, NULL, c_group, NULL)
             account.purple_account_add_buddy(self._get_structure(), c_buddy)
             if c_alias:
-                blist.purple_blist_alias_buddy(c_buddy, c_alias)
+                blist.purple_blist_alias_buddy(c_buddy, c_alias.encode())
                 server.serv_alias_buddy(c_buddy)
 
             return True
@@ -541,7 +547,7 @@ cdef class Account:
 
         if self.__exists and \
                 account.purple_account_is_connected(self._get_structure()):
-            c_buddy = blist.purple_find_buddy(self._get_structure(), name)
+            c_buddy = blist.purple_find_buddy(self._get_structure(), name.encode())
             if c_buddy == NULL:
                 return False
 
@@ -572,7 +578,7 @@ cdef class Account:
                                 blist.purple_buddy_get_presence(c_buddy)):
                     name = <char *> blist.purple_buddy_get_name(c_buddy)
 
-                    new_buddy = Buddy(name, self)
+                    new_buddy = Buddy(name.encode(), self)
 
                     c_alias = <char *> blist.purple_buddy_get_alias_only(c_buddy)
                     if c_alias:
@@ -614,22 +620,25 @@ cdef class Account:
     def request_add_buddy(self, buddy_username, buddy_alias):
         if buddy_alias:
             blist.purple_blist_request_add_buddy(self._get_structure(), \
-                    buddy_username, NULL, buddy_alias)
+                    buddy_username.encode(), NULL, buddy_alias.encode())
         else:
             blist.purple_blist_request_add_buddy(self._get_structure(), \
-                    buddy_username, NULL, NULL)
+                    buddy_username.encode(), NULL, NULL)
 
     def set_active_status(self, type, msg=None):
         cdef status.PurpleStatusType *c_statustype = NULL
         cdef savedstatuses.PurpleSavedStatus *c_savedstatus = NULL
+        cdef char* c_msg
 
         if self.__exists:
             if msg:
+                tmpstr = msg.encode()
+                c_msg = tmpstr
                 account.purple_account_set_status(self._get_structure(),
-                        <char *> type, True, <char *> "message", <char *> msg, NULL)
+                        type.encode(), True, <char *> "message", c_msg, NULL)
             else:
                 account.purple_account_set_status(self._get_structure(),
-                        <char *> type, True, NULL)
+                        type.encode(), True, NULL)
 
             # FIXME: We can create only a savedstatus for each statustype
             c_savedstatus = savedstatuses.purple_savedstatus_find(type)
@@ -642,7 +651,7 @@ cdef class Account:
                 savedstatuses.purple_savedstatus_set_title(c_savedstatus,
                         type)
 
-            savedstatuses.purple_savedstatus_set_message(c_savedstatus, msg)
+            savedstatuses.purple_savedstatus_set_message(c_savedstatus, msg.encode())
             prefs.purple_prefs_set_int("/purple/savedstatus/idleaway",
                     savedstatuses.purple_savedstatus_get_creation_time(c_savedstatus))
 
@@ -657,10 +666,10 @@ cdef class Account:
 
         if self.__exists and msg:
             c_status = account.purple_account_get_status(self._get_structure(),
-                    type)
+                    type.encode())
             if c_status == NULL:
                 return False
-            status.purple_status_set_attr_string(c_status, "message", msg)
+            status.purple_status_set_attr_string(c_status, "message", msg.encode())
 
             # FIXME: We can create only a savedstatus for each statustype
             c_savedstatus = savedstatuses.purple_savedstatus_find(type)

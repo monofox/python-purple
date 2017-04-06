@@ -26,6 +26,13 @@ import signal
 
 cdef glib.GHashTable *c_ui_info
 
+cdef extern from "<string.h>" nogil:
+    char   *strdup  (const char *s)
+
+cdef extern from "<stdlib.h>" nogil:
+    void   free  (void *ptr)
+
+
 c_ui_info = NULL
 
 cdef char *c_ui_name
@@ -71,7 +78,7 @@ cdef class Purple:
     '''
 
 
-    def __init__(self, ui_name, ui_version, ui_website, ui_dev_website, \
+    def __init__(self, str ui_name, str ui_version, str ui_website, str ui_dev_website, \
             debug_enabled=None, default_path=None, ignore_sigchld=False):
 
         global c_ui_name
@@ -79,16 +86,16 @@ cdef class Purple:
         global c_ui_website
         global c_ui_dev_website
 
-        c_ui_name = ui_name
-        c_ui_version = ui_version
-        c_ui_website = ui_website
-        c_ui_dev_website = ui_dev_website
+        c_ui_name = strdup(ui_name.encode())
+        c_ui_version = strdup(ui_version.encode())
+        c_ui_website = strdup(ui_website.encode())
+        c_ui_dev_website = strdup(ui_dev_website.encode())
 
         if debug_enabled:
             debug.purple_debug_set_enabled(debug_enabled)
 
         if default_path:
-            util.purple_util_set_user_dir(default_path)
+            util.purple_util_set_user_dir(default_path.encode())
 
         # libpurple's built-in DNS resolution forks processes to perform
         # blocking lookups without blocking the main process.  It does not
@@ -99,6 +106,10 @@ cdef class Purple:
 
     def destroy(self):
         core.purple_core_quit()
+        free(c_ui_name)
+        free(c_ui_version)
+        free(c_ui_website)
+        free(c_ui_dev_website)
 
     def __get_ui_name(self):
         '''Returns the UI name.
@@ -441,3 +452,4 @@ include "protocol.pyx"
 include "proxy.pyx"
 include "account.pyx"
 include "conversation.pyx"
+include "util.pyx"

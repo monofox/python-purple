@@ -44,7 +44,7 @@ cdef class Protocol:
             self.__exists = False
 
     cdef plugin.PurplePlugin *_get_structure(self):
-        return plugin.purple_plugins_find_with_id(self.__id)
+        return plugin.purple_plugins_find_with_id(self.__id.encode())
 
     def __get_exists(self):
         return self.__exists
@@ -94,7 +94,7 @@ cdef class Protocol:
 
             iter = iter.next
 
-            po[sett] = label
+            po[sett.decode()] = label.decode()
 
         return po
     options_labels = property(__get_options_labels)

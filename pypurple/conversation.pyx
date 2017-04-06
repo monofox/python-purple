@@ -49,8 +49,8 @@ cdef class Conversation:
 
     cdef conversation.PurpleConversation *_get_structure(self):
         return conversation.purple_find_conversation_with_account( \
-            self.__type, self.__name, account.purple_accounts_find( \
-            self.__account.username, self.__account.protocol.id))
+            self.__type, self.__name.encode(), account.purple_accounts_find( \
+            self.__account.username.encode(), self.__account.protocol.id.encode()))
 
     def __get_exists(self):
         return self.__exists
@@ -81,8 +81,8 @@ cdef class Conversation:
             return False
         else:
             conversation.purple_conversation_new(self.__type, \
-                    account.purple_accounts_find(self.__account.username, \
-                    self.__account.protocol.id), self.__name)
+                    account.purple_accounts_find(self.__account.username.encode(), \
+                    self.__account.protocol.id.encode()), self.__name.encode())
             self.__exists = True
             return True
 
@@ -137,7 +137,7 @@ cdef class Conversation:
         if self.__exists and self.__type == conversation.PURPLE_CONV_TYPE_IM:
             conversation.purple_conv_im_send( \
                     conversation.purple_conversation_get_im_data( \
-                    self._get_structure()), message)
+                    self._get_structure()), message.encode())
             return True
         else:
             return False
