@@ -25,7 +25,6 @@ import time
 from ctypes import CDLL
 
 CDLL("/usr/lib/libpurple.so", mode=ctypes.RTLD_GLOBAL)
-CDLL("/usr/lib/purple-2/ssl.so", mode=ctypes.RTLD_GLOBAL)
 
 import pypurple
 
