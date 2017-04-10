@@ -23,7 +23,7 @@ import time
 
 sys.setdlopenflags(dl.RTLD_NOW | dl.RTLD_GLOBAL)
 
-import purple
+import pypurple
 
 # The information below is needed by libpurple
 __NAME__ = "nullclient"
@@ -33,7 +33,7 @@ __DEV_WEBSITE__ = "N/A"
 
 if __name__ == '__main__':
     # Sets initial parameters
-    core = purple.Purple(__NAME__, __VERSION__, __WEBSITE__, __DEV_WEBSITE__, \
+    core = pypurple.Purple(__NAME__, __VERSION__, __WEBSITE__, __DEV_WEBSITE__, \
             debug_enabled=True, default_path="/tmp")
 
     # Initializes libpurple
@@ -44,10 +44,10 @@ if __name__ == '__main__':
     username = sys.stdin.readline()[:-1]
 
     # Initialize protocol class
-    protocol = purple.Protocol('prpl-jabber')
+    protocol = pypurple.Protocol('prpl-jabber')
 
     # Creates new account inside libpurple
-    account = purple.Account(username, protocol, core)
+    account = pypurple.Account(username, protocol, core)
     account.new()
 
     # Get password from user

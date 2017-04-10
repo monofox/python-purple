@@ -17,7 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cimport purple
+cimport pypurple
 
 def markup_strip_html(message):
     if message is None:
