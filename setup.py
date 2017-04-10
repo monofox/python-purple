@@ -23,21 +23,21 @@ def get_ldflags():
 long_description = "\
 Python bindings for libpurple, a multi-protocol instant messaging library."
 
-sourcefiles = ['purple/purple.pyx', 'purple/c_purple.c']
-extensions = [Extension("purple", sourcefiles,
+sourcefiles = ['pypurple/pypurple.pyx', 'pypurple/c_purple.c']
+extensions = [Extension("pypurple", sourcefiles,
                         extra_compile_args=get_cflags(),
                         extra_link_args=get_ldflags())]
 
 if USE_CYTHON:
     from Cython.Build import cythonize
-    extensions = cythonize(extensions, include_path=["purple/libpurple"])
+    extensions = cythonize(extensions, include_path=["pypurple/libpurple"])
 
 setup(
-    name='purple',
+    name='pypurple',
     version='0.0.1',
     author='Andrey Petrov',
     author_email='andrey.petrov@gmail.com',
-    packages=['purple'],
+    packages=['pypurple'],
     description='Python bindings for Purple',
     url="https://github.com/anpetrov/python-purple",
     download_url="https://github.com/anpetrov/python-purple/archive/0.0.1.tar.gz",
