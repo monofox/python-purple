@@ -29,10 +29,10 @@ CDLL("/usr/lib/libpurple.so", mode=ctypes.RTLD_GLOBAL)
 import pypurple
 
 # The information below is needed by libpurple
-__NAME__ = b"nullclient"
-__VERSION__ = b"0.0.1"
-__WEBSITE__ = b"N/A"
-__DEV_WEBSITE__ = b"N/A"
+__NAME__ = "nullclient"
+__VERSION__ = "0.0.1"
+__WEBSITE__ = "N/A"
+__DEV_WEBSITE__ = "N/A"
 
 def send_message(purple, account, name, message):
     conv = purple.Conversation('IM', account, name)
@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
     # Get username from user
     print("Enter GTalk account: ")
-    username = bytes(sys.stdin.readline()[:-1], 'utf-8')
+    username = sys.stdin.readline()[:-1]
 
     # Initialize protocol class
     protocol = pypurple.Protocol('prpl-jabber')
@@ -58,13 +58,13 @@ if __name__ == '__main__':
     account = pypurple.Account(username, protocol, core)
     account.new()
     # Get password from user
-    account.set_password(bytes(getpass.getpass(), 'utf-8'))
+    account.set_password(getpass.getpass())
 
     # Set account protocol options
     info = {}
-    info[b'connect_server'] = b'talk.google.com'
-    info[b'port'] = b'5222'
-    info[b'old_ssl'] = False
+    info['connect_server'] = 'talk.google.com'
+    info['port'] = '5222'
+    info['old_ssl'] = False
     account.set_protocol_options(info)
 
     # Enable account (connects automatically)
