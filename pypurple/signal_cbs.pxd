@@ -145,6 +145,29 @@ cdef void signal_buddy_signed_off_cb(blist.PurpleBuddy *buddy):
     if "buddy-signed-off" in signal_cbs:
         (<object> signal_cbs["buddy-signed-off"])(name, alias)
 
+cdef void signal_buddy_status_changed_cb(blist.PurpleBuddy *buddy):
+    """
+    Emitted when a buddy on your buddy list changed its status.
+    @params buddy  The buddy that changed its status.
+    """
+    cdef char *c_name = NULL
+    cdef char *c_alias = NULL
+
+    c_name = <char *> blist.purple_buddy_get_name(buddy)
+    if c_name == NULL:
+        name = None
+    else:
+        name = c_name
+
+    c_alias = <char *> blist.purple_buddy_get_alias_only(buddy)
+    if c_alias == NULL:
+        alias = None
+    else:
+        alias = c_alias
+
+    if "buddy-status-changed" in signal_cbs:
+        (<object> signal_cbs["buddy-status-changed"])(name, alias)
+
 cdef glib.gboolean signal_receiving_im_msg_cb(account.PurpleAccount *account, \
         char **sender, char **message, conversation.PurpleConversation *conv, \
         conversation.PurpleMessageFlags *flags):

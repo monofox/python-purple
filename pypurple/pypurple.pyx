@@ -435,6 +435,11 @@ cdef class _Purple:
                     blist.purple_blist_get_handle(),
                     "buddy-signed-off", &handle,
                     <signals.PurpleCallback> signal_buddy_signed_off_cb, NULL)
+        elif name == "buddy-status-changed":
+            signals.purple_signal_connect(
+                    blist.purple_blist_get_handle(),
+                    "buddy-status-changed", &handle,
+                    <signals.PurpleCallback> signal_buddy_status_changed_cb, NULL)
         elif name == "receiving-im-msg":
             signals.purple_signal_connect(
                     conversation.purple_conversations_get_handle(),
