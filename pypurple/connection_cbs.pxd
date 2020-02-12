@@ -111,6 +111,8 @@ cdef void report_disconnect_reason(connection.PurpleConnection *gc, \
     @since 2.3.0
     """
     debug.purple_debug_info("connection", "%s", "report-disconnect-reason\n")
+    cdef account.PurpleAccount *acc = connection.purple_connection_get_account(gc)
+
 
     reason_string = {
         0: 'Network error',
@@ -136,6 +138,10 @@ cdef void report_disconnect_reason(connection.PurpleConnection *gc, \
     else:
         text = None
 
+    account = gcore._get_account(<long>acc)
+    if account:
+       account._fire_callback("report-disconnect-reason", reason, reason_string, text.decode())
+
     if "report-disconnect-reason" in connection_cbs:
         (<object> connection_cbs["report-disconnect-reason"]) \
-            (reason_string, <char *> text)
+            (account, reason, reason_string, text.decode())

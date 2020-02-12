@@ -34,7 +34,7 @@ if USE_CYTHON:
 
 setup(
     name='pypurple',
-    version='0.0.1',
+    version='0.0.11',
     author='Andrey Petrov',
     author_email='andrey.petrov@gmail.com',
     packages=['pypurple'],

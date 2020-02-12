@@ -17,6 +17,11 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+SIGNAL_CONNECTION_ERROR = "connection-error"
+SIGNAL_SIGNED_ON = "signed-on"
+
+import queue
+import threading
 cimport pypurple
 
 cdef extern from "c_purple.h":
@@ -65,7 +70,72 @@ include "signal_cbs.pxd"
 
 include "util.pxd"
 
-cdef class Purple:
+gcore = None
+gqueue = None
+gevent = None
+
+def purple_run(func):
+    from threading import Thread
+    from functools import wraps
+
+    @wraps(func)
+    def async_func(*args, **kwargs):
+        if gcore.getThread() != threading.currentThread():
+            res = {}
+            print("decorator runs on another")
+            gcore.run_on_prpl(res, func, *args)
+            return res['res']
+        else:
+            print("decorator runs self")
+            return func(*args)
+
+    return async_func
+
+
+class Purple(_Purple):
+
+    def __init__(self, str ui_name, str ui_version, str ui_website, str ui_dev_website, \
+            debug_enabled=None, default_path=None, ignore_sigchld=False, thread=None):
+
+         global gqueue, gevent
+         _Purple.__init__(self, ui_name, ui_version, ui_website,  ui_dev_website, \
+            debug_enabled, default_path, ignore_sigchld)
+
+         self._accounts = {}
+         gqueue = queue.Queue()
+         gevent = threading.Event()
+         if thread is None:
+             _thread = threading.currentThread()
+
+    def getThread(self):
+         return self._thread
+
+
+    def _add_account(self, acc):
+        self._accounts[acc.get_structure()] = acc
+
+    def _remove_account(self, acc):
+        pass
+
+    def _get_account(self, acc_ptr):
+        print(self._accounts)
+        return self._accounts[acc_ptr] if acc_ptr in self._accounts else None
+
+    def run_on_prpl(self, result, function, *args):
+        global gqueue, gevent
+        item = {}
+        item['result'] = result
+        item['function'] = function
+        item['args'] = args
+        gevent.clear()
+        gqueue.put(item)
+        self._notify_event()
+        gevent.wait()
+        return result
+
+
+
+cdef class _Purple:
     '''Purple class.
 
     @param ui_name ID of the UI using the purple.
@@ -85,6 +155,9 @@ cdef class Purple:
         global c_ui_version
         global c_ui_website
         global c_ui_dev_website
+        global gcore
+
+        self.acc = []
 
         c_ui_name = strdup(ui_name.encode())
         c_ui_version = strdup(ui_version.encode())
@@ -103,6 +176,8 @@ cdef class Purple:
         # of zombie subprocesses marching around.
         if ignore_sigchld:
             signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+
+        gcore = self
 
     def destroy(self):
         core.purple_core_quit()
@@ -282,6 +357,8 @@ cdef class Purple:
         # load pounces
         pounce.purple_pounces_load()
 
+        self._thread = threading.currentThread()
+
         return ret
 
     def add_callback(self, type, name, callback):
@@ -321,6 +398,9 @@ cdef class Purple:
         if name is None:
             return
 
+        if name in signal_cbs:
+            return
+
         jabber = prpl.purple_find_prpl("prpl-jabber")
         if jabber == NULL:
             return
@@ -328,7 +408,8 @@ cdef class Purple:
         global signal_cbs
         signal_cbs[name] = cb
 
-        if name == "signed-on":
+        if name == SIGNAL_SIGNED_ON:
+            c_signed_on = SIGNAL_SIGNED_ON.encode()
             signals.purple_signal_connect(
                     connection.purple_connections_get_handle(),
                     "signed-on", &handle,
@@ -338,10 +419,11 @@ cdef class Purple:
                     connection.purple_connections_get_handle(),
                     "signed-off", &handle,
                     <signals.PurpleCallback> signal_signed_off_cb, NULL)
-        elif name == "connection-error":
+        elif name == SIGNAL_CONNECTION_ERROR:
+            c_connection_error = SIGNAL_CONNECTION_ERROR.encode()
             signals.purple_signal_connect(
                     connection.purple_connections_get_handle(),
-                    "connection-error", &handle,
+                    c_connection_error, &handle,
                     <signals.PurpleCallback> signal_connection_error_cb, NULL)
         elif name == "buddy-signed-on":
             signals.purple_signal_connect(
@@ -385,8 +467,8 @@ cdef class Purple:
                 protocol_id = <char *> account.purple_account_get_protocol_id(acc)
 
                 if username != NULL and protocol_id != NULL:
-                    account_list.append(Account(username, \
-                            Protocol(protocol_id), self))
+                    account_list.append(Account(username.decode(), \
+                            Protocol(protocol_id.decode()), self))
             iter = iter.next
 
         return account_list
@@ -425,6 +507,37 @@ cdef class Purple:
     def iterate_main_loop(self):
         glib.g_main_context_iteration(NULL, False)
         return True
+
+    cdef void lrun(self) nogil:
+        cdef glib.GMainLoop* loop = NULL
+        loop = <glib.GMainLoop*> glib.g_main_loop_new (<glib.GMainContext*>NULL, False);
+        with nogil:
+            glib.g_main_loop_run(loop)
+
+    def run(self):
+        self.lrun()
+
+    cdef glib.gboolean test_func(self, void *data) with gil:
+        global gqueue, gevent
+        item = gqueue.get()
+        fn = item['function']
+        args = item['args']
+        result = item['result']
+        ret = fn(*args)
+        result['res'] = ret
+        gevent.set()
+        # keep on going until queue is empty
+        return not gqueue.empty()
+
+    cpdef _notify_event(self):
+
+        cdef glib.GSource *idle_source
+        idle_source = glib.g_idle_source_new ()
+        glib.g_source_set_callback (idle_source, <glib.GSourceFunc> _Purple.test_func, <void*>self, NULL)
+
+        glib.g_source_attach(idle_source, NULL)
+        glib.g_source_unref(idle_source)
+
 
     def protocols_get_all(self):
         '''Returns a list of all protocols.

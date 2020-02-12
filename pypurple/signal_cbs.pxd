@@ -23,29 +23,18 @@ cdef extern from *:
     ctypedef char const_gchar "const gchar"
 
 cdef void signal_signed_on_cb(connection.PurpleConnection *gc, \
-        glib.gpointer null):
+        glib.gpointer null) with gil:
     """
     Emitted when a connection has signed on.
     @params gc  The connection that has signed on.
     """
-    cdef account.PurpleAccount *acc = connection.purple_connection_get_account(gc)
-    cdef char *c_username = NULL
-    cdef char *c_protocol_id = NULL
+    cdef account.PurpleAccount *acc
+    acc = connection.purple_connection_get_account(gc)
 
-    c_username = <char *> account.purple_account_get_username(acc)
-    if c_username == NULL:
-        username = None
-    else:
-        username = c_username
-
-    c_protocol_id = <char *> account.purple_account_get_protocol_id(acc)
-    if c_protocol_id == NULL:
-        protocol_id = None
-    else:
-        protocol_id = c_protocol_id
-
-    if "signed-on" in signal_cbs:
-        (<object> signal_cbs["signed-on"])(username, protocol_id)
+    account = gcore._get_account(<long>acc)
+    print(account)
+    if account:
+        account._fire_callback(SIGNAL_SIGNED_ON)
 
 cdef void signal_signed_off_cb(connection.PurpleConnection *gc, \
         glib.gpointer null):
@@ -81,20 +70,6 @@ cdef void signal_connection_error_cb(connection.PurpleConnection *gc, \
     @params desc A description of the error, giving more information
     """
     cdef account.PurpleAccount *acc = connection.purple_connection_get_account(gc)
-    cdef char *c_username = NULL
-    cdef char *c_protocol_id = NULL
-
-    c_username = <char *> account.purple_account_get_username(acc)
-    if c_username:
-        username = <char *> c_username
-    else:
-        username = None
-
-    c_protocol_id = <char *> account.purple_account_get_protocol_id(acc)
-    if c_protocol_id:
-        protocol_id = <char *> c_protocol_id
-    else:
-        protocol_id = None
 
     short_desc = {
         0: "Network error",
@@ -116,13 +91,13 @@ cdef void signal_connection_error_cb(connection.PurpleConnection *gc, \
         16: "Other error" }[<int> err]
 
     if c_desc:
-        desc = str(<char *> c_desc)
+        desc = <char *> c_desc
     else:
         desc = None
+    account = gcore._get_account(<long>acc)
+    if account:
+        account._fire_callback(SIGNAL_CONNECTION_ERROR, err, short_desc, desc.decode())
 
-    if "connection-error" in signal_cbs:
-        (<object> signal_cbs["connection-error"])(username, protocol_id, \
-                short_desc, desc)
 
 cdef void signal_buddy_signed_on_cb(blist.PurpleBuddy *buddy):
     """

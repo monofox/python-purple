@@ -28,7 +28,45 @@ cimport server
 cimport status
 cimport util
 
-cdef class Account:
+class Account(_Account):
+
+    @purple_run
+    def __init__(self, username, protocol, core):
+        _Account.__init__(self, username, protocol, core)
+        self.callbacks = {}
+
+    def set_callback(self, type, callback):
+        self.core.signal_connect(type)
+        self.callbacks[type] = callback
+
+    def _fire_callback(self, callback_type, *args):
+        if callback_type in self.callbacks:
+            self.callbacks[callback_type](*args)
+
+class SAccount(Account):
+
+    @purple_run
+    def __init__(self, *args):
+        Account.__init__(self, *args)
+
+    @purple_run
+    def new(self):
+        return Account.new(self)
+
+    @purple_run
+    def get_protocol_options(self):
+        return Account._get_protocol_options(self)
+
+    @purple_run
+    def set_protocol_options(self, *args):
+        return Account.set_protocol_options(self, *args)
+
+    @purple_run
+    def set_callback(self, *args):
+        return Account.set_callback(self, *args)
+
+
+cdef class _Account:
     """
     Account class
     @param username
@@ -48,12 +86,17 @@ cdef class Account:
 
         if protocol.exists and self._get_structure() != NULL:
             self.__exists = True
+            core._add_account(self)
         else:
             self.__exists = False
 
     cdef account.PurpleAccount *_get_structure(self):
         return account.purple_accounts_find(self.__username.encode(), \
                 self.__protocol.id.encode())
+
+    def get_structure(self):
+        cdef account.PurpleAccount *acc = self._get_structure()
+        return <long>acc
 
     def __is_connected(self):
         if self.__exists:
@@ -85,13 +128,14 @@ cdef class Account:
         return self.__exists
     exists = property(__get_exists)
 
+    @purple_run
     def __get_username(self):
         cdef char *username = NULL
         if self.__exists:
             username = <char *> account.purple_account_get_username( \
                     self._get_structure())
             if username:
-                return username
+                return username.decode()
             else:
                 return None
         else:
@@ -302,7 +346,7 @@ cdef class Account:
             return True
         else:
             return False
-
+    @purple_run
     def set_protocol_options(self, py_po):
         """
         @param po Dictionary {'setting': value, ...} options to be updated
@@ -369,6 +413,7 @@ cdef class Account:
 
         return True
 
+    @purple_run
     def set_password(self, password):
         """
         Sets the account's password.
@@ -453,6 +498,7 @@ cdef class Account:
                     self.__username.encode(), self.__protocol.id.encode()))
 
             self.__exists = True
+            self.__core._add_account(self)
             return True
 
     def remove(self):
@@ -463,6 +509,7 @@ cdef class Account:
         """
         if self.__exists:
             account.purple_accounts_delete(self._get_structure())
+            self.__core._remove_account(self)
             self__exists = False
             return True
         else:

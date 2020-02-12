@@ -154,3 +154,8 @@ cdef class Protocol:
 
         return po
     options_values = property(__get_options_values)
+
+class SProtocol(Protocol):
+    @purple_run
+    def __init__(self, id, core):
+        Protocol.__init__(self, id)

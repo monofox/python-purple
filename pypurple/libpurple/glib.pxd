@@ -73,6 +73,12 @@ cdef extern from "glib.h":
         GList *next
         GList *prev
 
+    ctypedef struct GMainLoop:
+        pass
+
+    ctypedef struct GSource:
+        pass
+
     void g_list_free (GList*)
 
     gboolean g_str_equal (gconstpointer, gconstpointer)
@@ -93,3 +99,9 @@ cdef extern from "glib.h":
     gboolean g_source_remove(guint tag)
 
     gchar *g_markup_escape_text (gchar *text, gssize length)
+    GMainLoop *g_main_loop_new (GMainContext*, gboolean) nogil
+    void g_main_loop_run (GMainLoop *) nogil
+    void g_source_set_callback (GSource *source, GSourceFunc func, gpointer data, GDestroyNotify notify) nogil
+    GSource *g_idle_source_new () nogil
+    guint g_source_attach (GSource *source, GMainContext *context)
+    void g_source_unref (GSource *source)
